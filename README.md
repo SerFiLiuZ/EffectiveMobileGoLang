@@ -1,0 +1,2 @@
+# EffectiveMobileGoLang
+Тестовое задание
