@@ -1,5 +1,10 @@
-module effective_mobile_go_lang
+module github.com/SerFiLiuZ/EffectiveMobileGoLang
 
 go 1.22.2
 
-require github.com/joho/godotenv v1.5.1 // indirect
+require (
+	github.com/gorilla/mux v1.8.1
+	github.com/joho/godotenv v1.5.1
+)
+
+require github.com/lib/pq v1.10.9 // indirect
