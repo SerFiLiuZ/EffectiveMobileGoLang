@@ -139,3 +139,21 @@ func (db *DB) DeleteCarByRegNum(regNum string) error {
 
 	return nil
 }
+
+func (db *DB) UpdateCarByRegNum(regNum string, data map[string]interface{}) error {
+	query := "UPDATE car SET "
+
+	for key, value := range data {
+		query += fmt.Sprintf("%s = '%v',", key, value)
+	}
+	query = query[:len(query)-1]
+
+	query += " WHERE regNum = $1"
+
+	_, err := db.Db.Exec(query, regNum)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
