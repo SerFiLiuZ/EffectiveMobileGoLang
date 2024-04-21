@@ -26,6 +26,21 @@ func main() {
 	}
 	defer db.Close()
 
+	// err = database.RollbackMigrations(db)
+	// if err != nil {
+	// 	logger.Fatalf("Error rollback migrations: %v", err)
+	// }
+
+	err = database.ApplyMigrations(db)
+	if err != nil {
+		logger.Fatalf("Error applying migrations: %v", err)
+	}
+
+	err = database.InsertData(db)
+	if err != nil {
+		logger.Fatalf("Error isnerdata: %v", err)
+	}
+
 	carHandler := handlers.NewCarHandler(db, logger)
 
 	router := mux.NewRouter()
