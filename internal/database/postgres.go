@@ -6,31 +6,36 @@ import (
 	"log"
 
 	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/config"
+	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/models"
 	"github.com/golang-migrate/migrate"
 	_ "github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file"
 )
 
-func Connect() (*sql.DB, error) {
+type DB struct {
+	Db *sql.DB
+}
+
+func Connect() (*DB, error) {
 	conf := config.GetConfig()
 	connStr := getConnStrForConnectDB(conf)
 
-	db, err := sql.Open("postgres", connStr)
+	dbConn, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.Ping()
+	err = dbConn.Ping()
 	if err != nil {
 		return nil, err
 	}
 
 	log.Println("Connected to database")
 
-	return db, nil
+	return &DB{Db: dbConn}, nil
 }
 
-func ApplyMigrations(db *sql.DB) error {
+func ApplyMigrations(db *DB) error {
 	migrationsDir := "C:/Users/serfi/Desktop/Work/GoLang Project/v2/EffectiveMobileGoLang/migrations"
 
 	conf := config.GetConfig()
@@ -52,7 +57,7 @@ func ApplyMigrations(db *sql.DB) error {
 	return nil
 }
 
-func RollbackMigrations(db *sql.DB) error {
+func RollbackMigrations(db *DB) error {
 	migrationsDir := "C:/Users/serfi/Desktop/Work/GoLang Project/v2/EffectiveMobileGoLang/migrations"
 
 	conf := config.GetConfig()
@@ -66,7 +71,6 @@ func RollbackMigrations(db *sql.DB) error {
 		return err
 	}
 
-	// Откатываем миграции
 	if err := m.Down(); err != nil && err != migrate.ErrNoChange {
 		return err
 	}
@@ -75,8 +79,8 @@ func RollbackMigrations(db *sql.DB) error {
 	return nil
 }
 
-func InsertData(db *sql.DB) error {
-	_, err := db.Exec(`INSERT INTO people (name, surname, patronymic) VALUES
+func InsertData(db *DB) error {
+	_, err := db.Db.Exec(`INSERT INTO people (name, surname, patronymic) VALUES
 						('Иван', 'Иванов', 'Иванович'),
 						('Петр', 'Петров', 'Петрович'),
 						('Анна', 'Сидорова', 'Ивановна')`)
@@ -86,7 +90,7 @@ func InsertData(db *sql.DB) error {
 
 	log.Println("People data inserted successfully")
 
-	_, err = db.Exec(`INSERT INTO car (regNum, mark, model, year, owner_name, owner_surname, owner_patronymic) VALUES
+	_, err = db.Db.Exec(`INSERT INTO car (regNum, mark, model, year, owner_name, owner_surname, owner_patronymic) VALUES
 						('X123XX150', 'Lada', 'Vesta', 2002, 'Иван', 'Иванов', 'Иванович'),
 						('Y456YY200', 'Toyota', 'Camry', 2015, 'Петр', 'Петров', 'Петрович'),
 						('Z789ZZ250', 'BMW', 'X5', 2019, 'Анна', 'Сидорова', 'Ивановна')`)
@@ -109,4 +113,18 @@ func getConnStrForConnectDB(conf *config.Config) string {
 func getConnStrForMigrations(conf *config.Config) string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		conf.DBUser, conf.DBPassword, conf.DBHost, conf.DBPort, conf.DBName)
+}
+
+func (db *DB) GetCarByRegNum(regNum string) (*models.Car, error) {
+	var car models.Car
+
+	row := db.Db.QueryRow("SELECT regNum, mark, model, year, owner_name, owner_surname, owner_patronymic FROM car WHERE regNum = $1", regNum)
+	err := row.Scan(&car.RegNum, &car.Mark, &car.Model, &car.Year, &car.OwnerName, &car.OwnerSurname, &car.OwnerPatronymic)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &car, nil
 }

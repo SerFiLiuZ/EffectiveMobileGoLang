@@ -24,12 +24,12 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Error connecting to database: %v", err)
 	}
-	defer db.Close()
+	defer db.Db.Close()
 
-	// err = database.RollbackMigrations(db)
-	// if err != nil {
-	// 	logger.Fatalf("Error rollback migrations: %v", err)
-	// }
+	err = database.RollbackMigrations(db)
+	if err != nil {
+		logger.Fatalf("Error rollback migrations: %v", err)
+	}
 
 	err = database.ApplyMigrations(db)
 	if err != nil {
@@ -38,15 +38,15 @@ func main() {
 
 	err = database.InsertData(db)
 	if err != nil {
-		logger.Fatalf("Error isnerdata: %v", err)
+		logger.Fatalf("Error inserdata: %v", err)
 	}
 
 	carHandler := handlers.NewCarHandler(db, logger)
 
 	router := mux.NewRouter()
 
-	// Получение данных с фильтрацией по всем полям и пагинацией
-	router.HandleFunc("/cars", carHandler.GetCars).Methods("GET")
+	// Получение данных об одном автомобиле по идентификатору
+	router.HandleFunc("/cars", carHandler.GetCar).Methods("GET")
 
 	// Удаление по идентификатору
 	router.HandleFunc("/cars/{id}", carHandler.DeleteCar).Methods("DELETE")
@@ -56,9 +56,6 @@ func main() {
 
 	// Добавление новых автомобилей
 	router.HandleFunc("/cars", carHandler.AddCar).Methods("POST")
-
-	// Получение данных об одном автомобиле по идентификатору
-	router.HandleFunc("/cars/{id}", carHandler.GetCarByID).Methods("GET")
 
 	port := os.Getenv("PORT")
 	if port == "" {
