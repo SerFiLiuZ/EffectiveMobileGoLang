@@ -55,7 +55,7 @@ func main() {
 	router.HandleFunc("/cars", carHandler.UpdateCar).Methods("PUT")
 
 	// Добавление новых автомобилей
-	router.HandleFunc("/cars", carHandler.AddCar).Methods("POST")
+	router.HandleFunc("/cars", carHandler.AddCars).Methods("POST")
 
 	port := os.Getenv("PORT")
 	if port == "" {

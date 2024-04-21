@@ -21,14 +21,18 @@ func NewCarHandler(db *database.DB, logger *utils.Logger) *CarHandler {
 }
 
 func (h *CarHandler) GetCar(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	var requestBody struct {
+		RegNum string `json:"regNum"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
 	if err != nil {
-		h.Logger.Errorf("Failed to parse form data: %v", err)
-		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		h.Logger.Errorf("Failed to decode JSON: %v", err)
+		http.Error(w, "Failed to decode JSON", http.StatusBadRequest)
 		return
 	}
 
-	regNum := r.Form.Get("regNum")
+	regNum := requestBody.RegNum
 
 	if regNum == "" {
 		h.Logger.Errorf("Parameter 'regNum' is required")
@@ -57,8 +61,8 @@ func (h *CarHandler) GetCar(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonBytes)
 }
 
-func (h *CarHandler) AddCar(w http.ResponseWriter, r *http.Request) {
-	// Реализация метода добавления нового автомобиля
+func (h *CarHandler) AddCars(w http.ResponseWriter, r *http.Request) {
+	// Реализация метода добавления нового автомобиля или автомоблей
 }
 
 func (h *CarHandler) UpdateCar(w http.ResponseWriter, r *http.Request) {
@@ -66,14 +70,18 @@ func (h *CarHandler) UpdateCar(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CarHandler) DeleteCar(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	var requestBody struct {
+		RegNum string `json:"regNum"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
 	if err != nil {
-		h.Logger.Errorf("Failed to parse form data: %v", err)
-		http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+		h.Logger.Errorf("Failed to decode JSON: %v", err)
+		http.Error(w, "Failed to decode JSON", http.StatusBadRequest)
 		return
 	}
 
-	regNum := r.Form.Get("regNum")
+	regNum := requestBody.RegNum
 
 	if regNum == "" {
 		h.Logger.Errorf("Parameter 'regNum' is required")
