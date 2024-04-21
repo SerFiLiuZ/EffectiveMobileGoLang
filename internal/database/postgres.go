@@ -10,6 +10,7 @@ import (
 	"github.com/golang-migrate/migrate"
 	_ "github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file"
+	"github.com/pkg/errors"
 )
 
 type DB struct {
@@ -153,6 +154,77 @@ func (db *DB) UpdateCarByRegNum(regNum string, data map[string]interface{}) erro
 	_, err := db.Db.Exec(query, regNum)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (db *DB) AddCar(newCar models.Car) error {
+	// Проверяем существование владельца в базе данных
+	existingOwner, err := db.GetOwnerByName(newCar.OwnerName, newCar.OwnerSurname, newCar.OwnerPatronymic)
+	if err != nil {
+		return err
+	}
+
+	// Если владелец не существует, добавляем его в базу данных
+	if existingOwner == nil {
+		// Создаем нового владельца
+		newOwner := models.Person{
+			Name:       newCar.OwnerName,
+			Surname:    newCar.OwnerSurname,
+			Patronymic: newCar.OwnerPatronymic,
+		}
+
+		// Добавляем владельца в базу данных
+		err := db.AddOwner(newOwner)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Теперь добавляем машину в базу данных
+	query := `
+		INSERT INTO car (regNum, mark, model, year, owner_name, owner_surname, owner_patronymic)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`
+
+	_, err = db.Db.Exec(query, newCar.RegNum, newCar.Mark, newCar.Model, newCar.Year, newCar.OwnerName, newCar.OwnerSurname, newCar.OwnerPatronymic)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db *DB) GetOwnerByName(name, surname, patronymic string) (*models.Person, error) {
+	query := `
+		SELECT name, surname, patronymic
+		FROM people
+		WHERE name = $1 AND surname = $2 AND patronymic = $3
+		LIMIT 1
+	`
+
+	var owner models.Person
+	err := db.Db.QueryRow(query, name, surname, patronymic).Scan(&owner.Name, &owner.Surname, &owner.Patronymic)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, errors.Wrap(err, "failed to get owner by name")
+	}
+
+	return &owner, nil
+}
+
+func (db *DB) AddOwner(owner models.Person) error {
+	query := `
+        INSERT INTO people (name, surname, patronymic)
+        VALUES ($1, $2, $3)
+    `
+
+	_, err := db.Db.Exec(query, owner.Name, owner.Surname, owner.Patronymic)
+	if err != nil {
+		return errors.Wrap(err, "failed to add owner")
 	}
 
 	return nil

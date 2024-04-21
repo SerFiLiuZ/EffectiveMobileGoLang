@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/database"
+	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/models"
 	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/utils"
 )
 
@@ -62,7 +63,45 @@ func (h *CarHandler) GetCar(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CarHandler) AddCars(w http.ResponseWriter, r *http.Request) {
-	// Реализация метода добавления нового автомобиля или автомоблей
+	var requestBody struct {
+		RegNums         []string `json:"regNums"`
+		Mark            []string `json:"mark"`
+		Model           []string `json:"model"`
+		Year            []int    `json:"year"`
+		OwnerName       []string `json:"ownerName"`
+		OwnerSurname    []string `json:"ownerSurname"`
+		OwnerPatronymic []string `json:"ownerPatronymic"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		h.Logger.Errorf("Failed to decode JSON: %v", err)
+		http.Error(w, "Failed to decode JSON", http.StatusBadRequest)
+		return
+	}
+
+	for i := 0; i < len(requestBody.RegNums); i++ {
+		newCar := models.Car{
+			RegNum:          requestBody.RegNums[i],
+			Mark:            requestBody.Mark[i],
+			Model:           requestBody.Model[i],
+			Year:            requestBody.Year[i],
+			OwnerName:       requestBody.OwnerName[i],
+			OwnerSurname:    requestBody.OwnerSurname[i],
+			OwnerPatronymic: requestBody.OwnerPatronymic[i],
+		}
+
+		err := h.DB.AddCar(newCar)
+		if err != nil {
+			h.Logger.Errorf("Failed to add car: %v", err)
+			http.Error(w, "Failed to add car", http.StatusInternalServerError)
+			return
+		}
+		h.Logger.Infof("Car add successfully: %s", requestBody.RegNums[i])
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Cars added successfully"))
 }
 
 func (h *CarHandler) UpdateCar(w http.ResponseWriter, r *http.Request) {
