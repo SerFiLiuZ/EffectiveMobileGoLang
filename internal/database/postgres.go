@@ -128,3 +128,14 @@ func (db *DB) GetCarByRegNum(regNum string) (*models.Car, error) {
 
 	return &car, nil
 }
+
+func (db *DB) DeleteCarByRegNum(regNum string) error {
+	query := "DELETE FROM car WHERE regNum = $1"
+
+	_, err := db.Db.Exec(query, regNum)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

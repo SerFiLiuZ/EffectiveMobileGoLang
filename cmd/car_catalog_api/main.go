@@ -49,10 +49,10 @@ func main() {
 	router.HandleFunc("/cars", carHandler.GetCar).Methods("GET")
 
 	// Удаление по идентификатору
-	router.HandleFunc("/cars/{id}", carHandler.DeleteCar).Methods("DELETE")
+	router.HandleFunc("/cars", carHandler.DeleteCar).Methods("DELETE")
 
 	// Изменение одного или нескольких полей по идентификатору
-	router.HandleFunc("/cars/{id}", carHandler.UpdateCar).Methods("PUT")
+	router.HandleFunc("/cars", carHandler.UpdateCar).Methods("PUT")
 
 	// Добавление новых автомобилей
 	router.HandleFunc("/cars", carHandler.AddCar).Methods("POST")
