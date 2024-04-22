@@ -122,7 +122,7 @@ func (db *DB) GetCarByRegNum(regNum string) (*models.Car, error) {
 	row := db.Db.QueryRow("SELECT regNum, mark, model, year, owner_name, owner_surname, owner_patronymic FROM car WHERE regNum = $1", regNum)
 	err := row.Scan(&car.RegNum, &car.Mark, &car.Model, &car.Year, &car.OwnerName, &car.OwnerSurname, &car.OwnerPatronymic)
 	if err == sql.ErrNoRows {
-		return nil, nil
+		return nil, errors.New("car not found")
 	} else if err != nil {
 		return nil, err
 	}
@@ -131,9 +131,20 @@ func (db *DB) GetCarByRegNum(regNum string) (*models.Car, error) {
 }
 
 func (db *DB) DeleteCarByRegNum(regNum string) error {
-	query := "DELETE FROM car WHERE regNum = $1"
+	var count int
+	query := "SELECT COUNT(regNum) FROM car WHERE regNum = $1"
+	row := db.Db.QueryRow(query, regNum)
+	err := row.Scan(&count)
+	if err != nil {
+		return err
+	}
 
-	_, err := db.Db.Exec(query, regNum)
+	if count == 0 {
+		return errors.New("car not found")
+	}
+
+	query = "DELETE FROM car WHERE regNum = $1"
+	_, err = db.Db.Exec(query, regNum)
 	if err != nil {
 		return err
 	}
@@ -142,7 +153,23 @@ func (db *DB) DeleteCarByRegNum(regNum string) error {
 }
 
 func (db *DB) UpdateCarByRegNum(regNum string, data map[string]interface{}) error {
-	query := "UPDATE car SET "
+	var count int
+	query := "SELECT COUNT(regNum) FROM car WHERE regNum = $1"
+	row := db.Db.QueryRow(query, regNum)
+	err := row.Scan(&count)
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		return errors.New("car not found")
+	}
+
+	if len(data) == 0 {
+		return errors.New("no data to update")
+	}
+
+	query = "UPDATE car SET "
 
 	for key, value := range data {
 		query += fmt.Sprintf("%s = '%v',", key, value)
@@ -151,7 +178,7 @@ func (db *DB) UpdateCarByRegNum(regNum string, data map[string]interface{}) erro
 
 	query += " WHERE regNum = $1"
 
-	_, err := db.Db.Exec(query, regNum)
+	_, err = db.Db.Exec(query, regNum)
 	if err != nil {
 		return err
 	}
@@ -160,29 +187,24 @@ func (db *DB) UpdateCarByRegNum(regNum string, data map[string]interface{}) erro
 }
 
 func (db *DB) AddCar(newCar models.Car) error {
-	// Проверяем существование владельца в базе данных
 	existingOwner, err := db.GetOwnerByName(newCar.OwnerName, newCar.OwnerSurname, newCar.OwnerPatronymic)
 	if err != nil {
 		return err
 	}
 
-	// Если владелец не существует, добавляем его в базу данных
 	if existingOwner == nil {
-		// Создаем нового владельца
 		newOwner := models.People{
 			Name:       newCar.OwnerName,
 			Surname:    newCar.OwnerSurname,
 			Patronymic: newCar.OwnerPatronymic,
 		}
 
-		// Добавляем владельца в базу данных
 		err := db.AddOwner(newOwner)
 		if err != nil {
 			return err
 		}
 	}
 
-	// Теперь добавляем машину в базу данных
 	query := `
 		INSERT INTO car (regNum, mark, model, year, owner_name, owner_surname, owner_patronymic)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
