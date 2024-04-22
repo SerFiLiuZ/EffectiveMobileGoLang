@@ -23,20 +23,14 @@ func NewCarHandler(db *database.DB, logger *utils.Logger) *CarHandler {
 }
 
 func (h *CarHandler) GetCar(w http.ResponseWriter, r *http.Request) {
-	var requestBody struct {
-		RegNum string `json:"regNum"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&requestBody)
-	if err != nil {
-		h.Logger.Errorf("Failed to decode JSON: %v", err)
-		http.Error(w, "Failed to decode JSON", http.StatusBadRequest)
+	regNum := r.URL.Query().Get("regNum")
+	if regNum == "" {
+		h.Logger.Errorf("Parameter 'regNum' is required")
+		http.Error(w, "Parameter 'regNum' is required", http.StatusBadRequest)
 		return
 	}
 
-	h.Logger.Debugf("GetCar: requestBody: %v", requestBody)
-
-	regNum := requestBody.RegNum
+	h.Logger.Debugf("GetCar: regNum: %v", regNum)
 
 	if regNum == "" {
 		h.Logger.Errorf("Parameter 'regNum' is required")
