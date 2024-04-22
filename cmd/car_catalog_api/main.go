@@ -46,16 +46,16 @@ func main() {
 	router := mux.NewRouter()
 
 	// Получение данных об одном автомобиле по идентификатору
-	router.HandleFunc("/cars", carHandler.GetCar).Methods("GET")
+	router.HandleFunc("/info", carHandler.GetCar).Methods("GET")
 
 	// Удаление по идентификатору
-	router.HandleFunc("/cars", carHandler.DeleteCar).Methods("DELETE")
+	router.HandleFunc("/del", carHandler.DeleteCar).Methods("DELETE")
 
 	// Изменение одного или нескольких полей по идентификатору
-	router.HandleFunc("/cars", carHandler.UpdateCar).Methods("PUT")
+	router.HandleFunc("/update", carHandler.UpdateCar).Methods("PUT")
 
 	// Добавление новых автомобилей
-	router.HandleFunc("/cars", carHandler.AddCars).Methods("POST")
+	router.HandleFunc("/add", carHandler.AddCars).Methods("POST")
 
 	port := os.Getenv("PORT")
 	if port == "" {
