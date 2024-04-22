@@ -32,12 +32,6 @@ func (h *CarHandler) GetCar(w http.ResponseWriter, r *http.Request) {
 
 	h.Logger.Debugf("GetCar: regNum: %v", regNum)
 
-	if regNum == "" {
-		h.Logger.Errorf("Parameter 'regNum' is required")
-		http.Error(w, "Parameter 'regNum' is required", http.StatusBadRequest)
-		return
-	}
-
 	car, err := h.DB.GetCarByRegNum(regNum)
 	if err != nil {
 		h.Logger.Errorf("Failed to fetch car information: %v", err)
