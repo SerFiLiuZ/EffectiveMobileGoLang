@@ -1,10 +1,10 @@
 package config
 
 import (
-	"log"
 	"os"
 	"strings"
 
+	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/utils"
 	"github.com/joho/godotenv"
 )
 
@@ -18,10 +18,10 @@ type Config struct {
 	Port       string
 }
 
-func LoadEnv() error {
+func LoadEnv(logger *utils.Logger) error {
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("Error getting current working directory: %v", err)
+		logger.Fatal("Error getting current working directory: %v", err)
 		return err
 	}
 
@@ -29,11 +29,11 @@ func LoadEnv() error {
 	envFilePath := wd + "/../../internal/config/.env"
 	envFilePath = strings.Replace(envFilePath, "\\", "/", -1)
 
-	log.Printf("Loading .env file from path: %s", envFilePath)
+	logger.Debugf("Loading .env file from path: %s", envFilePath)
 
 	err = godotenv.Load(envFilePath)
 	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+		logger.Fatal("Error loading .env file: %v", err)
 		return err
 	}
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 
@@ -13,32 +12,33 @@ import (
 )
 
 func main() {
-	err := config.LoadEnv()
+	logger := utils.NewLogger()
+	logger.EnableDebug()
+
+	err := config.LoadEnv(logger)
 	if err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+		logger.Fatal("Error loading .env file: %v", err)
 	}
 
-	logger := utils.NewLogger()
-
-	db, err := database.Connect()
+	db, err := database.Connect(logger)
 	if err != nil {
-		logger.Fatalf("Error connecting to database: %v", err)
+		logger.Fatal("Error connecting to database: %v", err)
 	}
 	defer db.Db.Close()
 
 	err = database.RollbackMigrations(db)
 	if err != nil {
-		logger.Fatalf("Error rollback migrations: %v", err)
+		logger.Fatal("Error rollback migrations: %v", err)
 	}
 
 	err = database.ApplyMigrations(db)
 	if err != nil {
-		logger.Fatalf("Error applying migrations: %v", err)
+		logger.Fatal("Error applying migrations: %v", err)
 	}
 
 	err = database.InsertData(db)
 	if err != nil {
-		logger.Fatalf("Error inserdata: %v", err)
+		logger.Fatal("Error inserdata: %v", err)
 	}
 
 	carHandler := handlers.NewCarHandler(db, logger)
@@ -66,6 +66,6 @@ func main() {
 
 	err = http.ListenAndServe(":"+port, router)
 	if err != nil {
-		logger.Fatalf("Error starting server: %v", err)
+		logger.Fatal("Error starting server: %v", err)
 	}
 }

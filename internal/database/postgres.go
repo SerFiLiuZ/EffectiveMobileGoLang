@@ -3,10 +3,10 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/config"
 	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/models"
+	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/utils"
 	"github.com/golang-migrate/migrate"
 	_ "github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file"
@@ -14,10 +14,11 @@ import (
 )
 
 type DB struct {
-	Db *sql.DB
+	Db     *sql.DB
+	Logger *utils.Logger
 }
 
-func Connect() (*DB, error) {
+func Connect(logger *utils.Logger) (*DB, error) {
 	conf := config.GetConfig()
 	connStr := getConnStrForConnectDB(conf)
 
@@ -31,9 +32,9 @@ func Connect() (*DB, error) {
 		return nil, err
 	}
 
-	log.Println("Connected to database")
+	logger.Infof("Connected to database")
 
-	return &DB{Db: dbConn}, nil
+	return &DB{Db: dbConn, Logger: logger}, nil
 }
 
 func ApplyMigrations(db *DB) error {
@@ -54,7 +55,7 @@ func ApplyMigrations(db *DB) error {
 		return err
 	}
 
-	log.Println("Migrations applied successfully")
+	db.Logger.Infof("Migrations applied successfully")
 	return nil
 }
 
@@ -76,7 +77,7 @@ func RollbackMigrations(db *DB) error {
 		return err
 	}
 
-	log.Println("Migrations rolled back successfully")
+	db.Logger.Infof("Migrations rolled back successfully")
 	return nil
 }
 
@@ -89,7 +90,7 @@ func InsertData(db *DB) error {
 		return err
 	}
 
-	log.Println("People data inserted successfully")
+	db.Logger.Debugf("People data inserted successfully")
 
 	_, err = db.Db.Exec(`INSERT INTO car (regNum, mark, model, year, owner_name, owner_surname, owner_patronymic) VALUES
 						('X123XX150', 'Lada', 'Vesta', 2002, 'Иван', 'Иванов', 'Иванович'),
@@ -99,7 +100,7 @@ func InsertData(db *DB) error {
 		return err
 	}
 
-	log.Println("Car data inserted successfully")
+	db.Logger.Debugf("Car data inserted successfully")
 
 	return nil
 }

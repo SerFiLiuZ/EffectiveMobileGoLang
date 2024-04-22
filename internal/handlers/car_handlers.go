@@ -34,6 +34,8 @@ func (h *CarHandler) GetCar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.Logger.Debugf("GetCar: requestBody: %v", requestBody)
+
 	regNum := requestBody.RegNum
 
 	if regNum == "" {
@@ -80,6 +82,8 @@ func (h *CarHandler) AddCars(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to decode JSON", http.StatusBadRequest)
 		return
 	}
+
+	h.Logger.Debugf("AddCars: requestBody: %v", requestBody)
 
 	lengths := []int{
 		len(requestBody.RegNums),
@@ -149,6 +153,8 @@ func (h *CarHandler) UpdateCar(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
 
+	h.Logger.Debugf("UpdateCar: requestBody: %v", requestBody)
+
 	requestData := map[string]interface{}{
 		"mark":            requestBody.Mark,
 		"model":           requestBody.Model,
@@ -195,6 +201,9 @@ func (h *CarHandler) DeleteCar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
+
+	h.Logger.Debugf("UpdateCar: requestBody: %v", requestBody)
+
 	if err != nil {
 		h.Logger.Errorf("Failed to decode JSON: %v", err)
 		http.Error(w, "Failed to decode JSON", http.StatusBadRequest)
