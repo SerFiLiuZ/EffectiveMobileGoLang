@@ -169,7 +169,7 @@ func (db *DB) AddCar(newCar models.Car) error {
 	// Если владелец не существует, добавляем его в базу данных
 	if existingOwner == nil {
 		// Создаем нового владельца
-		newOwner := models.Person{
+		newOwner := models.People{
 			Name:       newCar.OwnerName,
 			Surname:    newCar.OwnerSurname,
 			Patronymic: newCar.OwnerPatronymic,
@@ -196,7 +196,7 @@ func (db *DB) AddCar(newCar models.Car) error {
 	return nil
 }
 
-func (db *DB) GetOwnerByName(name, surname, patronymic string) (*models.Person, error) {
+func (db *DB) GetOwnerByName(name, surname, patronymic string) (*models.People, error) {
 	query := `
 		SELECT name, surname, patronymic
 		FROM people
@@ -204,7 +204,7 @@ func (db *DB) GetOwnerByName(name, surname, patronymic string) (*models.Person, 
 		LIMIT 1
 	`
 
-	var owner models.Person
+	var owner models.People
 	err := db.Db.QueryRow(query, name, surname, patronymic).Scan(&owner.Name, &owner.Surname, &owner.Patronymic)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -216,7 +216,7 @@ func (db *DB) GetOwnerByName(name, surname, patronymic string) (*models.Person, 
 	return &owner, nil
 }
 
-func (db *DB) AddOwner(owner models.Person) error {
+func (db *DB) AddOwner(owner models.People) error {
 	query := `
         INSERT INTO people (name, surname, patronymic)
         VALUES ($1, $2, $3)
