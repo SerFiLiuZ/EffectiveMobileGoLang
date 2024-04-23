@@ -187,21 +187,14 @@ func (h *CarHandler) UpdateCar(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CarHandler) DeleteCar(w http.ResponseWriter, r *http.Request) {
-	var requestBody struct {
-		RegNum string `json:"regNum"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&requestBody)
-
-	h.Logger.Debugf("DeleteCar: requestBody: %v", requestBody)
-
-	if err != nil {
-		h.Logger.Errorf("Failed to decode JSON: %v", err)
-		http.Error(w, "Failed to decode JSON", http.StatusBadRequest)
+	regNum := r.URL.Query().Get("regNum")
+	if regNum == "" {
+		h.Logger.Errorf("Parameter 'regNum' is required")
+		http.Error(w, "Parameter 'regNum' is required", http.StatusBadRequest)
 		return
 	}
 
-	regNum := requestBody.RegNum
+	h.Logger.Debugf("GetCar: regNum: %v", regNum)
 
 	if regNum == "" {
 		h.Logger.Errorf("Parameter 'regNum' is required")
@@ -209,7 +202,7 @@ func (h *CarHandler) DeleteCar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.DB.DeleteCarByRegNum(regNum)
+	err := h.DB.DeleteCarByRegNum(regNum)
 	if err != nil {
 		h.Logger.Errorf("Failed to delete car: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
