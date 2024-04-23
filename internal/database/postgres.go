@@ -161,7 +161,7 @@ func (db *DB) DeleteCarByRegNum(regNum string) error {
 	return nil
 }
 
-func (db *DB) UpdateCarByRegNum(regNum string, data map[string]interface{}) error {
+func (db *DB) UpdateCarByRegNum(regNum, mark, model string, year int, owner models.People) error {
 	var count int
 	query := "SELECT COUNT(regNum) FROM car WHERE regNum = $1"
 	row := db.Db.QueryRow(query, regNum)
@@ -174,15 +174,24 @@ func (db *DB) UpdateCarByRegNum(regNum string, data map[string]interface{}) erro
 		return errors.New("car not found")
 	}
 
-	if len(data) == 0 {
+	if mark == "" && model == "" && year == 0 && (owner == models.People{}) {
 		return errors.New("no data to update")
 	}
 
 	query = "UPDATE car SET "
 
-	for key, value := range data {
-		query += fmt.Sprintf("%s = '%v',", key, value)
+	if mark != "" {
+		query += fmt.Sprintf("mark = '%v',", mark)
 	}
+
+	if model != "" {
+		query += fmt.Sprintf("model = '%v',", model)
+	}
+
+	if year != 0 {
+		query += fmt.Sprintf("year = '%v',", year)
+	}
+
 	query = query[:len(query)-1]
 
 	query += " WHERE regNum = $1"

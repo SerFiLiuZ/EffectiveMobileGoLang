@@ -133,33 +133,14 @@ func (h *CarHandler) AddCars(w http.ResponseWriter, r *http.Request) {
 
 func (h *CarHandler) UpdateCar(w http.ResponseWriter, r *http.Request) {
 	var requestBody struct {
-		RegNum          string `json:"regNum"`
-		Mark            string `json:"mark"`
-		Model           string `json:"model"`
-		Year            int    `json:"year"`
-		OwnerName       string `json:"ownerName"`
-		OwnerSurname    string `json:"ownerSurname"`
-		OwnerPatronymic string `json:"ownerPatronymic"`
+		RegNum string        `json:"regNum"`
+		Mark   string        `json:"mark"`
+		Model  string        `json:"model"`
+		Year   int           `json:"year"`
+		Owner  models.People `json:"owner"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
-
-	h.Logger.Debugf("UpdateCar: requestBody: %v", requestBody)
-
-	requestData := map[string]interface{}{
-		"mark":            requestBody.Mark,
-		"model":           requestBody.Model,
-		"year":            requestBody.Year,
-		"ownerName":       requestBody.OwnerName,
-		"ownerSurname":    requestBody.OwnerSurname,
-		"ownerPatronymic": requestBody.OwnerPatronymic,
-	}
-
-	for key, value := range requestData {
-		if value == nil || value == "" || value == 0 {
-			delete(requestData, key)
-		}
-	}
 
 	if err != nil {
 		h.Logger.Errorf("Failed to decode JSON: %v", err)
@@ -167,13 +148,22 @@ func (h *CarHandler) UpdateCar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.Logger.Debugf("UpdateCar: requestBody: %v", requestBody)
+
 	if requestBody.RegNum == "" {
 		h.Logger.Errorf("Parameter 'regNum' is required")
 		http.Error(w, "Parameter 'regNum' is required", http.StatusBadRequest)
 		return
 	}
 
-	err = h.DB.UpdateCarByRegNum(requestBody.RegNum, requestData)
+	err = h.DB.UpdateCarByRegNum(
+		requestBody.RegNum,
+		requestBody.Mark,
+		requestBody.Model,
+		requestBody.Year,
+		requestBody.Owner,
+	)
+
 	if err != nil {
 		h.Logger.Errorf("Failed to update car: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

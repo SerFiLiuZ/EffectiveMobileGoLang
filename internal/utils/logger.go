@@ -18,7 +18,7 @@ func NewLogger() *Logger {
 }
 
 func (l *Logger) Infof(format string, v ...interface{}) {
-	l.Printf("[INFO] "+format, v...)
+	l.Printf("[INFO]  "+format, v...)
 }
 
 func (l *Logger) Fatal(format string, v ...interface{}) {
