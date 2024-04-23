@@ -92,10 +92,10 @@ func InsertData(db *DB) error {
 
 	db.Logger.Debugf("People data inserted successfully")
 
-	_, err = db.Db.Exec(`INSERT INTO car (regNum, mark, model, year, owner_name, owner_surname, owner_patronymic) VALUES
-						('X123XX150', 'Lada', 'Vesta', 2002, 'Иван', 'Иванов', 'Иванович'),
-						('Y456YY200', 'Toyota', 'Camry', 2015, 'Петр', 'Петров', 'Петрович'),
-						('Z789ZZ250', 'BMW', 'X5', 2019, 'Анна', 'Сидорова', 'Ивановна')`)
+	_, err = db.Db.Exec(`INSERT INTO car (regNum, mark, model, year, owner_name, owner_surname) VALUES
+						('X123XX150', 'Lada', 'Vesta', 2002, 'Иван', 'Иванов'),
+						('Y456YY200', 'Toyota', 'Camry', 2015, 'Петр', 'Петров'),
+						('Z789ZZ250', 'BMW', 'X5', 2019, 'Анна', 'Сидорова')`)
 	if err != nil {
 		return err
 	}
@@ -120,8 +120,16 @@ func getConnStrForMigrations(conf *config.Config) string {
 func (db *DB) GetCarByRegNum(regNum string) (*models.Car, error) {
 	var car models.Car
 
-	row := db.Db.QueryRow("SELECT regNum, mark, model, year, owner_name, owner_surname, owner_patronymic FROM car WHERE regNum = $1", regNum)
-	err := row.Scan(&car.RegNum, &car.Mark, &car.Model, &car.Year, &car.OwnerName, &car.OwnerSurname, &car.OwnerPatronymic)
+	query := `
+	SELECT regNum, mark, model, year, people.name, people.surname, people.patronymic
+		FROM car
+		JOIN people ON car.owner_name = people.name AND car.owner_surname = people.surname
+		WHERE car.regNum = $1;
+	`
+
+	row := db.Db.QueryRow(query, regNum)
+
+	err := row.Scan(&car.RegNum, &car.Mark, &car.Model, &car.Year, &car.Owner.Name, &car.Owner.Surname, &car.Owner.Patronymic)
 	if err == sql.ErrNoRows {
 		return nil, errors.New("car not found")
 	} else if err != nil {
@@ -188,16 +196,16 @@ func (db *DB) UpdateCarByRegNum(regNum string, data map[string]interface{}) erro
 }
 
 func (db *DB) AddCar(newCar models.Car) error {
-	existingOwner, err := db.GetOwnerByName(newCar.OwnerName, newCar.OwnerSurname, newCar.OwnerPatronymic)
+	existingOwner, err := db.GetOwnerByName(newCar.Owner.Name, newCar.Owner.Surname, newCar.Owner.Patronymic)
 	if err != nil {
 		return err
 	}
 
 	if existingOwner == nil {
 		newOwner := models.People{
-			Name:       newCar.OwnerName,
-			Surname:    newCar.OwnerSurname,
-			Patronymic: newCar.OwnerPatronymic,
+			Name:       newCar.Owner.Name,
+			Surname:    newCar.Owner.Surname,
+			Patronymic: newCar.Owner.Patronymic,
 		}
 
 		err := db.AddOwner(newOwner)
@@ -211,7 +219,7 @@ func (db *DB) AddCar(newCar models.Car) error {
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
-	_, err = db.Db.Exec(query, newCar.RegNum, newCar.Mark, newCar.Model, newCar.Year, newCar.OwnerName, newCar.OwnerSurname, newCar.OwnerPatronymic)
+	_, err = db.Db.Exec(query, newCar.RegNum, newCar.Mark, newCar.Model, newCar.Year, newCar.Owner.Name, newCar.Owner.Surname, newCar.Owner.Patronymic)
 	if err != nil {
 		return err
 	}

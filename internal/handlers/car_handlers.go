@@ -55,13 +55,11 @@ func (h *CarHandler) GetCar(w http.ResponseWriter, r *http.Request) {
 
 func (h *CarHandler) AddCars(w http.ResponseWriter, r *http.Request) {
 	var requestBody struct {
-		RegNums         []string `json:"regNums"`
-		Mark            []string `json:"mark"`
-		Model           []string `json:"model"`
-		Year            []int    `json:"year"`
-		OwnerName       []string `json:"ownerName"`
-		OwnerSurname    []string `json:"ownerSurname"`
-		OwnerPatronymic []string `json:"ownerPatronymic"`
+		RegNums []string        `json:"regNums"`
+		Mark    []string        `json:"mark"`
+		Model   []string        `json:"model"`
+		Year    []int           `json:"year"`
+		Owner   []models.People `json:"owner"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
@@ -78,9 +76,7 @@ func (h *CarHandler) AddCars(w http.ResponseWriter, r *http.Request) {
 		len(requestBody.Mark),
 		len(requestBody.Model),
 		len(requestBody.Year),
-		len(requestBody.OwnerName),
-		len(requestBody.OwnerSurname),
-		len(requestBody.OwnerPatronymic),
+		len(requestBody.Owner),
 	}
 
 	for i := 1; i < len(lengths); i++ {
@@ -96,23 +92,30 @@ func (h *CarHandler) AddCars(w http.ResponseWriter, r *http.Request) {
 		if requestBody.RegNums[i] == "" ||
 			requestBody.Mark[i] == "" ||
 			requestBody.Model[i] == "" ||
-			requestBody.Year[i] == 0 ||
-			requestBody.OwnerName[i] == "" ||
-			requestBody.OwnerSurname[i] == "" {
+			requestBody.Year[i] == 0 {
 			err := errors.New("data is incomplete")
 			h.Logger.Errorf("Failed to add car: %v", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
+	}
 
+	for _, owner := range requestBody.Owner {
+		if owner.Name == "" || owner.Surname == "" {
+			err := errors.New("data is incomplete")
+			h.Logger.Errorf("Failed to add car: %v", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
+	for i := 0; i < len(requestBody.RegNums); i++ {
 		newCar := models.Car{
-			RegNum:          requestBody.RegNums[i],
-			Mark:            requestBody.Mark[i],
-			Model:           requestBody.Model[i],
-			Year:            requestBody.Year[i],
-			OwnerName:       requestBody.OwnerName[i],
-			OwnerSurname:    requestBody.OwnerSurname[i],
-			OwnerPatronymic: requestBody.OwnerPatronymic[i],
+			RegNum: requestBody.RegNums[i],
+			Mark:   requestBody.Mark[i],
+			Model:  requestBody.Model[i],
+			Year:   requestBody.Year[i],
+			Owner:  requestBody.Owner[i],
 		}
 
 		err := h.DB.AddCar(newCar)
@@ -190,7 +193,7 @@ func (h *CarHandler) DeleteCar(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
 
-	h.Logger.Debugf("UpdateCar: requestBody: %v", requestBody)
+	h.Logger.Debugf("DeleteCar: requestBody: %v", requestBody)
 
 	if err != nil {
 		h.Logger.Errorf("Failed to decode JSON: %v", err)

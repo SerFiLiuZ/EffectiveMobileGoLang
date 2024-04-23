@@ -5,6 +5,5 @@ CREATE TABLE IF NOT EXISTS car (
     year INTEGER,
     owner_name VARCHAR(100) NOT NULL,
     owner_surname VARCHAR(100) NOT NULL,
-    owner_patronymic VARCHAR(100),
     CONSTRAINT fk_owner FOREIGN KEY (owner_name, owner_surname) REFERENCES people(name, surname)
 );
