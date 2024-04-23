@@ -224,11 +224,11 @@ func (db *DB) AddCar(newCar models.Car) error {
 	}
 
 	query := `
-		INSERT INTO car (regNum, mark, model, year, owner_name, owner_surname, owner_patronymic)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO car (regNum, mark, model, year, owner_name, owner_surname)
+		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 
-	_, err = db.Db.Exec(query, newCar.RegNum, newCar.Mark, newCar.Model, newCar.Year, newCar.Owner.Name, newCar.Owner.Surname, newCar.Owner.Patronymic)
+	_, err = db.Db.Exec(query, newCar.RegNum, newCar.Mark, newCar.Model, newCar.Year, newCar.Owner.Name, newCar.Owner.Surname)
 	if err != nil {
 		return err
 	}
