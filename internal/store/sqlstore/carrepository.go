@@ -1,16 +1,18 @@
-package database
+package sqlstore
 
 import (
 	"database/sql"
 	"fmt"
 
 	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/models"
-	_ "github.com/golang-migrate/migrate/database/postgres"
-	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/pkg/errors"
 )
 
-func (db *DB) GetCarByRegNum(regNum string) (*models.Car, error) {
+type CarRepository struct {
+	store *Store
+}
+
+func (r *CarRepository) GetCarByRegNum(regNum string) (*models.Car, error) {
 	var car models.Car
 
 	query := `
@@ -20,7 +22,7 @@ func (db *DB) GetCarByRegNum(regNum string) (*models.Car, error) {
 		WHERE car.regNum = $1;
 	`
 
-	row := db.Db.QueryRow(query, regNum)
+	row := r.store.db.QueryRow(query, regNum)
 
 	err := row.Scan(&car.RegNum, &car.Mark, &car.Model, &car.Year, &car.Owner.Name, &car.Owner.Surname, &car.Owner.Patronymic)
 	if err == sql.ErrNoRows {
@@ -32,10 +34,10 @@ func (db *DB) GetCarByRegNum(regNum string) (*models.Car, error) {
 	return &car, nil
 }
 
-func (db *DB) DeleteCarByRegNum(regNum string) error {
+func (r *CarRepository) DeleteCarByRegNum(regNum string) error {
 	var count int
 	query := "SELECT COUNT(regNum) FROM car WHERE regNum = $1"
-	row := db.Db.QueryRow(query, regNum)
+	row := r.store.db.QueryRow(query, regNum)
 	err := row.Scan(&count)
 	if err != nil {
 		return err
@@ -46,7 +48,7 @@ func (db *DB) DeleteCarByRegNum(regNum string) error {
 	}
 
 	query = "DELETE FROM car WHERE regNum = $1"
-	_, err = db.Db.Exec(query, regNum)
+	_, err = r.store.db.Exec(query, regNum)
 	if err != nil {
 		return err
 	}
@@ -54,10 +56,10 @@ func (db *DB) DeleteCarByRegNum(regNum string) error {
 	return nil
 }
 
-func (db *DB) UpdateCarByRegNum(regNum, mark, model string, year int, owner models.People) error {
+func (r *CarRepository) UpdateCarByRegNum(regNum, mark, model string, year int, owner models.People) error {
 	var count int
 	query := "SELECT COUNT(regNum) FROM car WHERE regNum = $1"
-	row := db.Db.QueryRow(query, regNum)
+	row := r.store.db.QueryRow(query, regNum)
 	err := row.Scan(&count)
 	if err != nil {
 		return err
@@ -89,7 +91,7 @@ func (db *DB) UpdateCarByRegNum(regNum, mark, model string, year int, owner mode
 
 	query += " WHERE regNum = $1"
 
-	_, err = db.Db.Exec(query, regNum)
+	_, err = r.store.db.Exec(query, regNum)
 	if err != nil {
 		return err
 	}
@@ -97,8 +99,8 @@ func (db *DB) UpdateCarByRegNum(regNum, mark, model string, year int, owner mode
 	return nil
 }
 
-func (db *DB) AddCar(newCar models.Car) error {
-	existingOwner, err := db.GetOwnerByName(newCar.Owner.Name, newCar.Owner.Surname, newCar.Owner.Patronymic)
+func (r *CarRepository) AddCar(newCar models.Car) error {
+	existingOwner, err := r.store.peopleRepository.GetOwnerByName(newCar.Owner.Name, newCar.Owner.Surname, newCar.Owner.Patronymic)
 	if err != nil {
 		return err
 	}
@@ -110,7 +112,7 @@ func (db *DB) AddCar(newCar models.Car) error {
 			Patronymic: newCar.Owner.Patronymic,
 		}
 
-		err := db.AddOwner(newOwner)
+		err := r.store.peopleRepository.AddOwner(newOwner)
 		if err != nil {
 			return err
 		}
@@ -121,7 +123,7 @@ func (db *DB) AddCar(newCar models.Car) error {
 		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 
-	_, err = db.Db.Exec(query, newCar.RegNum, newCar.Mark, newCar.Model, newCar.Year, newCar.Owner.Name, newCar.Owner.Surname)
+	_, err = r.store.db.Exec(query, newCar.RegNum, newCar.Mark, newCar.Model, newCar.Year, newCar.Owner.Name, newCar.Owner.Surname)
 	if err != nil {
 		return err
 	}

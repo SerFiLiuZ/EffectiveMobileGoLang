@@ -1,6 +1,7 @@
-package config
+package apiserver
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -9,13 +10,14 @@ import (
 )
 
 type Config struct {
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPassword string
-	DBName     string
-	DBScheme   string
-	Port       string
+	DBHost      string
+	DBPort      string
+	DBUser      string
+	DBPassword  string
+	DBName      string
+	DBScheme    string
+	Port        string
+	DatabaseURL string
 }
 
 func LoadEnv(logger *utils.Logger) error {
@@ -41,13 +43,23 @@ func LoadEnv(logger *utils.Logger) error {
 }
 
 func GetConfig() *Config {
+	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s",
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_PORT"),
+		os.Getenv("DB_NAME"),
+		os.Getenv("DB_SCHEME"),
+	)
+
 	return &Config{
-		DBHost:     os.Getenv("DB_HOST"),
-		DBPort:     os.Getenv("DB_PORT"),
-		DBUser:     os.Getenv("DB_USER"),
-		DBPassword: os.Getenv("DB_PASSWORD"),
-		DBName:     os.Getenv("DB_NAME"),
-		DBScheme:   os.Getenv("DB_SCHEME"),
-		Port:       os.Getenv("PORT"),
+		DBHost:      os.Getenv("DB_HOST"),
+		DBPort:      os.Getenv("DB_PORT"),
+		DBUser:      os.Getenv("DB_USER"),
+		DBPassword:  os.Getenv("DB_PASSWORD"),
+		DBName:      os.Getenv("DB_NAME"),
+		DBScheme:    os.Getenv("DB_SCHEME"),
+		Port:        os.Getenv("PORT"),
+		DatabaseURL: dbURL,
 	}
 }

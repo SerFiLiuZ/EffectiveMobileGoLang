@@ -1,15 +1,17 @@
-package database
+package sqlstore
 
 import (
 	"database/sql"
 
 	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/models"
-	_ "github.com/golang-migrate/migrate/database/postgres"
-	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/pkg/errors"
 )
 
-func (db *DB) GetOwnerByName(name, surname, patronymic string) (*models.People, error) {
+type PeopleRepository struct {
+	store *Store
+}
+
+func (r *PeopleRepository) GetOwnerByName(name, surname, patronymic string) (*models.People, error) {
 	query := `
 		SELECT name, surname, patronymic
 		FROM people
@@ -18,7 +20,7 @@ func (db *DB) GetOwnerByName(name, surname, patronymic string) (*models.People, 
 	`
 
 	var owner models.People
-	err := db.Db.QueryRow(query, name, surname, patronymic).Scan(&owner.Name, &owner.Surname, &owner.Patronymic)
+	err := r.store.db.QueryRow(query, name, surname, patronymic).Scan(&owner.Name, &owner.Surname, &owner.Patronymic)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -29,13 +31,13 @@ func (db *DB) GetOwnerByName(name, surname, patronymic string) (*models.People, 
 	return &owner, nil
 }
 
-func (db *DB) AddOwner(owner models.People) error {
+func (r *PeopleRepository) AddOwner(owner models.People) error {
 	query := `
         INSERT INTO people (name, surname, patronymic)
         VALUES ($1, $2, $3)
     `
 
-	_, err := db.Db.Exec(query, owner.Name, owner.Surname, owner.Patronymic)
+	_, err := r.store.db.Exec(query, owner.Name, owner.Surname, owner.Patronymic)
 	if err != nil {
 		return errors.Wrap(err, "failed to add owner")
 	}
