@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/models"
+	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/utils"
 	"github.com/pkg/errors"
 )
 
@@ -12,7 +13,15 @@ type CarRepository struct {
 	store *Store
 }
 
+func (r *CarRepository) InitCarRepository() bool {
+	return r != nil
+}
+
 func (r *CarRepository) GetCarByRegNum(regNum string) (*models.Car, error) {
+	logger := utils.NewLogger()
+	logger.EnableDebug()
+	logger.DisableDebug()
+
 	var car models.Car
 
 	query := `
@@ -21,7 +30,7 @@ func (r *CarRepository) GetCarByRegNum(regNum string) (*models.Car, error) {
 		JOIN people ON car.owner_name = people.name AND car.owner_surname = people.surname
 		WHERE car.regNum = $1;
 	`
-
+	logger.Debugf("r.store.db: %v", r.store.db)
 	row := r.store.db.QueryRow(query, regNum)
 
 	err := row.Scan(&car.RegNum, &car.Mark, &car.Model, &car.Year, &car.Owner.Name, &car.Owner.Surname, &car.Owner.Patronymic)
@@ -100,10 +109,24 @@ func (r *CarRepository) UpdateCarByRegNum(regNum, mark, model string, year int, 
 }
 
 func (r *CarRepository) AddCar(newCar models.Car) error {
-	existingOwner, err := r.store.peopleRepository.GetOwnerByName(newCar.Owner.Name, newCar.Owner.Surname, newCar.Owner.Patronymic)
+	logger := utils.NewLogger()
+	logger.EnableDebug()
+	logger.DisableDebug()
+
+	logger.Debugf("Start AddCar")
+	logger.Debugf("Form req")
+
+	logger.Debugf("newCar: %v", newCar)
+
+	logger.Debugf("CarRepository: %v", r)
+
+	existingOwner, err := r.store.People().GetOwnerByName(newCar.Owner.Name, newCar.Owner.Surname, newCar.Owner.Patronymic)
+
 	if err != nil {
 		return err
 	}
+
+	logger.Debugf("Req complite")
 
 	if existingOwner == nil {
 		newOwner := models.People{
@@ -111,8 +134,7 @@ func (r *CarRepository) AddCar(newCar models.Car) error {
 			Surname:    newCar.Owner.Surname,
 			Patronymic: newCar.Owner.Patronymic,
 		}
-
-		err := r.store.peopleRepository.AddOwner(newOwner)
+		err := r.store.People().AddOwner(newOwner)
 		if err != nil {
 			return err
 		}

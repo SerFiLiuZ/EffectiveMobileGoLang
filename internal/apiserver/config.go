@@ -10,14 +10,15 @@ import (
 )
 
 type Config struct {
-	DBHost      string
-	DBPort      string
-	DBUser      string
-	DBPassword  string
-	DBName      string
-	DBScheme    string
-	Port        string
-	DatabaseURL string
+	DBHost          string
+	DBPort          string
+	DBUser          string
+	DBPassword      string
+	DBName          string
+	DBScheme        string
+	Port            string
+	DatabaseURL     string
+	DBMigrationsdir string
 }
 
 func LoadEnv(logger *utils.Logger) error {
@@ -53,13 +54,14 @@ func GetConfig() *Config {
 	)
 
 	return &Config{
-		DBHost:      os.Getenv("DB_HOST"),
-		DBPort:      os.Getenv("DB_PORT"),
-		DBUser:      os.Getenv("DB_USER"),
-		DBPassword:  os.Getenv("DB_PASSWORD"),
-		DBName:      os.Getenv("DB_NAME"),
-		DBScheme:    os.Getenv("DB_SCHEME"),
-		Port:        os.Getenv("PORT"),
-		DatabaseURL: dbURL,
+		DBHost:          os.Getenv("DB_HOST"),
+		DBPort:          os.Getenv("DB_PORT"),
+		DBUser:          os.Getenv("DB_USER"),
+		DBPassword:      os.Getenv("DB_PASSWORD"),
+		DBName:          os.Getenv("DB_NAME"),
+		DBScheme:        os.Getenv("DB_SCHEME"),
+		Port:            os.Getenv("PORT"),
+		DatabaseURL:     dbURL,
+		DBMigrationsdir: os.Getenv("DB_MIGRATIONS_DIR"),
 	}
 }

@@ -2,6 +2,7 @@ package apiserver
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/SerFiLiuZ/EffectiveMobileGoLang/internal/store/sqlstore"
@@ -21,19 +22,33 @@ func Start(config *Config, logger *utils.Logger) error {
 
 	logger.Infof("Connected to database")
 
+	logger.Debugf("db: %v", db)
+
 	store := sqlstore.New(db)
+
+	logger.Debugf("store: %v", store)
+
 	srv := newServer(store, logger)
 
-	migrationsDir := "C:/Users/serfi/Desktop/Work/GoLang Project/v2/EffectiveMobileGoLang/migrations"
+	err = InitRepositoris(store, logger)
+	if err != nil {
+		return err
+	}
 
-	err = store.DBController().RollbackMigrations(db, migrationsDir, config.DatabaseURL)
+	logger.Infof("All repositoris init")
+
+	logger.Debugf("srv: %v", srv)
+
+	logger.Debugf("srv.store: %v", srv.store)
+
+	err = store.DBController().RollbackMigrations(db, config.DBMigrationsdir, config.DatabaseURL)
 	if err != nil {
 		return err
 	}
 
 	logger.Infof("Rollback migrations complite")
 
-	err = store.DBController().ApplyMigrations(db, migrationsDir, config.DatabaseURL)
+	err = store.DBController().ApplyMigrations(db, config.DBMigrationsdir, config.DatabaseURL)
 	if err != nil {
 		return err
 	}
@@ -48,6 +63,8 @@ func Start(config *Config, logger *utils.Logger) error {
 	logger.Infof("Insert test data complite")
 
 	logger.Infof("Server started on port %s", config.Port)
+
+	logger.Debugf("srv.store: %v", srv.store)
 
 	return http.ListenAndServe(config.Port,
 		handlers.CORS(
@@ -71,4 +88,23 @@ func Connect(dbURL string) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func InitRepositoris(store *sqlstore.Store, logger *utils.Logger) error {
+	if store.People().InitPeopleRepository() {
+		logger.Debugf("store.People() - init")
+	} else {
+		return errors.New("PeopleRepository dont init")
+	}
+	if store.Car().InitCarRepository() {
+		logger.Debugf("store.Car() - init")
+	} else {
+		return errors.New("CarRepository dont init")
+	}
+	if store.DBController().InitDBControllerRepository() {
+		logger.Debugf("store.DBController() - init")
+	} else {
+		return errors.New("DBControllerRepository dont init")
+	}
+	return nil
 }

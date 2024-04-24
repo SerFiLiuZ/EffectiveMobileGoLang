@@ -8,6 +8,7 @@ import (
 func main() {
 	logger := utils.NewLogger()
 	logger.EnableDebug()
+	logger.DisableDebug()
 
 	apiserver.LoadEnv(logger)
 

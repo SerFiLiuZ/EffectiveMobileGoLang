@@ -13,9 +13,11 @@ type DBControllerRepository struct {
 	store *Store
 }
 
-func (r *DBControllerRepository) ApplyMigrations(db *sql.DB, migrationsDir, connStr string) error {
-	// migrationsDir := "C:/Users/serfi/Desktop/Work/GoLang Project/v2/EffectiveMobileGoLang/migrations"
+func (r *DBControllerRepository) InitDBControllerRepository() bool {
+	return r != nil
+}
 
+func (r *DBControllerRepository) ApplyMigrations(db *sql.DB, migrationsDir, connStr string) error {
 	m, err := migrate.New(
 		fmt.Sprintf("file://%s", migrationsDir),
 		connStr,
@@ -32,8 +34,6 @@ func (r *DBControllerRepository) ApplyMigrations(db *sql.DB, migrationsDir, conn
 }
 
 func (r *DBControllerRepository) RollbackMigrations(db *sql.DB, migrationsDir, connStr string) error {
-	// migrationsDir := "C:/Users/serfi/Desktop/Work/GoLang Project/v2/EffectiveMobileGoLang/migrations"
-
 	m, err := migrate.New(
 		fmt.Sprintf("file://%s", migrationsDir),
 		connStr,

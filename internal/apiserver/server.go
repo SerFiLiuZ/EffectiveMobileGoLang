@@ -54,7 +54,7 @@ func (s *server) getCar() http.HandlerFunc {
 		car, err := s.store.Car().GetCarByRegNum(regNum)
 		if err != nil {
 			s.logger.Errorf("Failed to fetch car information: %v", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to fetch car information: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -70,6 +70,8 @@ func (s *server) getCar() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		w.Write(jsonBytes)
+
+		s.logger.Debugf("%v", s.store)
 	}
 }
 
@@ -104,7 +106,7 @@ func (s *server) addCars() http.HandlerFunc {
 			if lengths[i] != lengths[0] {
 				err := errors.New("data is incomplete")
 				s.logger.Errorf("Failed to add car: %v", err)
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, "Failed to add car: "+err.Error(), http.StatusBadRequest)
 				return
 			}
 		}
@@ -116,19 +118,23 @@ func (s *server) addCars() http.HandlerFunc {
 				req.Year[i] == 0 {
 				err := errors.New("data is incomplete")
 				s.logger.Errorf("Failed to add car: %v", err)
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, "Failed to add car: "+err.Error(), http.StatusBadRequest)
 				return
 			}
 		}
+
+		s.logger.Debugf("AddCars: data.len is complete")
 
 		for _, owner := range req.Owner {
 			if owner.Name == "" || owner.Surname == "" {
 				err := errors.New("data is incomplete")
 				s.logger.Errorf("Failed to add car: %v", err)
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, "Failed to add car: "+err.Error(), http.StatusBadRequest)
 				return
 			}
 		}
+
+		s.logger.Debugf("AddCars: data.owner is complete")
 
 		for i := 0; i < len(req.RegNums); i++ {
 			newCar := models.Car{
@@ -139,12 +145,16 @@ func (s *server) addCars() http.HandlerFunc {
 				Owner:  req.Owner[i],
 			}
 
+			s.logger.Debugf("AddCars: add car start")
+			s.logger.Debugf("AddCars: newCar: %v", newCar)
+
 			err := s.store.Car().AddCar(newCar)
 			if err != nil {
 				s.logger.Errorf("Failed to add car: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				http.Error(w, "Failed to add car: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
+			s.logger.Debugf("AddCars: add car complite")
 			s.logger.Infof("Car add successfully: %s", req.RegNums[i])
 		}
 
@@ -189,7 +199,7 @@ func (s *server) updateCar() http.HandlerFunc {
 
 		if err != nil {
 			s.logger.Errorf("Failed to update car: %v", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to update car: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -220,7 +230,7 @@ func (s *server) deleteCar() http.HandlerFunc {
 		err := s.store.Car().DeleteCarByRegNum(regNum)
 		if err != nil {
 			s.logger.Errorf("Failed to delete car: %v", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, "Failed to delete car: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
